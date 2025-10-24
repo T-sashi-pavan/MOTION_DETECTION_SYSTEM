@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Motion Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .video-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .video-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .placeholder {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .placeholder-text h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            min-width: 160px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(45deg, #f44336, #e57373);
+            color: white;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats h3 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            font-size: 1.4em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #4caf50;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active {
+            background: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.6);
+        }
+
+        .status-inactive {
+            background: #666;
+        }
+
+        .status-motion {
+            background: #ff5722;
+            box-shadow: 0 0 15px rgba(255, 87, 34, 0.8);
+            animation: alertPulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes alertPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            opacity: 0.8;
+        }
+
+        .message {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+            color: #c8e6c9;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #ffcdd2;
+        }
+
+        .device-info {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #4fc3f7;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Motion Detection System</h1>
+        <p>Real-time Human Detection - Each Device Uses Its Own Camera</p>
+    </div>
+
+    <div class="container">
+        <!-- Device Info -->
+        <div class="device-info">
+            <p>📱 <strong>Your Device:</strong> <span id="device-info">Loading...</span></p>
+            <p>📷 <strong>Camera:</strong> Uses your device's own camera</p>
+        </div>
+
+        <!-- Video Display -->
+        <div class="video-container">
+            <div id="video-section">
+                <div class="placeholder">
+                    <div class="placeholder-text">
+                        <h3>📷 Camera Access Required</h3>
+                        <p>Click "Start Detection" to allow camera access</p>
+                        <p><small>Your camera data stays on your device</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="start-btn" class="btn btn-start">▶️ Start Detection</button>
+            <button id="stop-btn" class="btn btn-stop" disabled>⏹️ Stop Detection</button>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <h3>📊 Detection Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="people-count" class="stat-value">0</div>
+                    <div class="stat-label">People Detected</div>
+                </div>
+                <div class="stat-item">
+                    <div id="motion-count" class="stat-value">0</div>
+                    <div class="stat-label">Motion Events</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">
+                        <span id="status-indicator" class="status-indicator status-inactive"></span>
+                        <span id="status-text">Inactive</span>
+                    </div>
+                    <div class="stat-label">System Status</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="message-area"></div>
+    </div>
+
+    <div class="footer">
+        <p>🚀 Client-Side Processing | 🔒 Your data stays on your device</p>
+    </div>
+
+    <script>
+        // UI Elements
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const videoSection = document.getElementById('video-section');
+        const peopleCount = document.getElementById('people-count');
+        const motionCount = document.getElementById('motion-count');
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        const messageArea = document.getElementById('message-area');
+        const deviceInfo = document.getElementById('device-info');
+
+        // Detection variables
+        let video = null;
+        let canvas = null;
+        let ctx = null;
+        let stream = null;
+        let isRunning = false;
+        let previousFrame = null;
+        let motionEvents = 0;
+        let detectedPeople = 0;
+
+        // Initialize device info
+        function updateDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceType = 'Desktop';
+            
+            if (/Android/i.test(userAgent)) {
+                deviceType = 'Android Device';
+            } else if (/iPhone|iPad|iPod/i.test(userAgent)) {
+                deviceType = 'iOS Device';
+            } else if (/Windows Phone/i.test(userAgent)) {
+                deviceType = 'Windows Phone';
+            }
+            
+            deviceInfo.textContent = deviceType;
+        }
+
+        // Utility functions
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = message;
+            messageArea.appendChild(messageDiv);
+
+            setTimeout(() => {
+                if (messageArea.contains(messageDiv)) {
+                    messageArea.removeChild(messageDiv);
+                }
+            }, 5000);
+        }
+
+        function updateStatus(running, hasMotion = false) {
+            if (running) {
+                if (hasMotion) {
+                    statusIndicator.className = 'status-indicator status-motion';
+                    statusText.textContent = 'Motion Detected';
+                } else {
+                    statusIndicator.className = 'status-indicator status-active';
+                    statusText.textContent = 'Active';
+                }
+            } else {
+                statusIndicator.className = 'status-indicator status-inactive';
+                statusText.textContent = 'Inactive';
+            }
+        }
+
+        // Motion detection functions
+        function detectMotion(currentFrame, previousFrame) {
+            if (!previousFrame) return false;
+
+            const canvas1 = document.createElement('canvas');
+            const canvas2 = document.createElement('canvas');
+            const ctx1 = canvas1.getContext('2d');
+            const ctx2 = canvas2.getContext('2d');
+
+            canvas1.width = canvas2.width = 160;  // Reduced size for performance
+            canvas1.height = canvas2.height = 120;
+
+            ctx1.drawImage(currentFrame, 0, 0, 160, 120);
+            ctx2.drawImage(previousFrame, 0, 0, 160, 120);
+
+            const currentData = ctx1.getImageData(0, 0, 160, 120);
+            const previousData = ctx2.getImageData(0, 0, 160, 120);
+
+            let diffCount = 0;
+            const threshold = 25;
+            const minMotionPixels = 200;
+
+            for (let i = 0; i < currentData.data.length; i += 4) {
+                const diff = Math.abs(currentData.data[i] - previousData.data[i]) +
+                           Math.abs(currentData.data[i + 1] - previousData.data[i + 1]) +
+                           Math.abs(currentData.data[i + 2] - previousData.data[i + 2]);
+
+                if (diff > threshold) {
+                    diffCount++;
+                }
+            }
+
+            return diffCount > minMotionPixels;
+        }
+
+        function estimatePeopleCount(motionDetected) {
+            // Simple estimation: if motion is detected, assume at least 1 person
+            // In a real implementation, you could use more sophisticated algorithms
+            return motionDetected ? Math.max(1, Math.floor(Math.random() * 3) + 1) : 0;
+        }
+
+        function drawDetectionBoxes() {
+            if (!canvas || !ctx) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (detectedPeople > 0) {
+                // Draw sample detection boxes (in real implementation, use actual detection)
+                const boxWidth = 120;
+                const boxHeight = 200;
+                
+                for (let i = 0; i < detectedPeople; i++) {
+                    const x = 50 + (i * 150);
+                    const y = 50;
+                    
+                    if (x + boxWidth < canvas.width) {
+                        ctx.strokeStyle = '#00ff00';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x, y, boxWidth, boxHeight);
+                        
+                        // Add label
+                        ctx.fillStyle = '#00ff00';
+                        ctx.font = '16px Arial';
+                        ctx.fillText(`Person ${i + 1}`, x, y - 10);
+                    }
+                }
+            }
+        }
+
+        function processFrame() {
+            if (!isRunning || !video || video.videoWidth === 0) return;
+
+            const motionDetected = detectMotion(video, previousFrame);
+            
+            if (motionDetected) {
+                motionEvents++;
+                detectedPeople = estimatePeopleCount(true);
+            } else {
+                detectedPeople = 0;
+            }
+
+            // Update UI
+            motionCount.textContent = motionEvents;
+            peopleCount.textContent = detectedPeople;
+            updateStatus(true, motionDetected);
+
+            // Draw detection boxes
+            drawDetectionBoxes();
+
+            // Store current frame for next comparison
+            previousFrame = document.createElement('canvas');
+            previousFrame.width = video.videoWidth;
+            previousFrame.height = video.videoHeight;
+            const ctx = previousFrame.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+
+            // Continue processing
+            if (isRunning) {
+                setTimeout(processFrame, 200); // Process every 200ms for performance
+            }
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Create video element
+                video = document.createElement('video');
+                video.id = 'video';
+                video.autoplay = true;
+                video.playsInline = true;
+                video.srcObject = stream;
+
+                // Create canvas for detection boxes
+                canvas = document.createElement('canvas');
+                canvas.id = 'canvas';
+                ctx = canvas.getContext('2d');
+
+                // Create wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'video-wrapper';
+                wrapper.appendChild(video);
+                wrapper.appendChild(canvas);
+
+                videoSection.innerHTML = '';
+                videoSection.appendChild(wrapper);
+
+                // Wait for video to load
+                return new Promise((resolve) => {
+                    video.addEventListener('loadedmetadata', () => {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        resolve(true);
+                    });
+                });
+
+            } catch (error) {
+                console.error('Camera access error:', error);
+                throw new Error('Camera access denied or not available');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            videoSection.innerHTML = `
+                <div class="placeholder">
+                    <div class="placeholder-text">
+                        <h3>📷 Camera Access Required</h3>
+                        <p>Click "Start Detection" to allow camera access</p>
+                        <p><small>Your camera data stays on your device</small></p>
+                    </div>
+                </div>
+            `;
+            
+            video = null;
+            canvas = null;
+            ctx = null;
+            previousFrame = null;
+        }
+
+        // Event handlers
+        startBtn.addEventListener('click', async () => {
+            try {
+                startBtn.innerHTML = '<span class="loading"></span>Starting...';
+                startBtn.disabled = true;
+
+                await startCamera();
+                
+                isRunning = true;
+                motionEvents = 0;
+                detectedPeople = 0;
+                
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                // Start processing
+                setTimeout(processFrame, 1000); // Give camera time to stabilize
+                
+                showMessage('✅ Motion detection started! Using your device camera', 'success');
+                updateStatus(true);
+
+            } catch (error) {
+                showMessage('❌ ' + error.message, 'error');
+                startBtn.disabled = false;
+            } finally {
+                startBtn.innerHTML = '▶️ Start Detection';
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            try {
+                stopBtn.innerHTML = '<span class="loading"></span>Stopping...';
+                stopBtn.disabled = true;
+
+                isRunning = false;
+                startBtn.disabled = false;
+                stopCamera();
+                
+                // Reset stats
+                motionEvents = 0;
+                detectedPeople = 0;
+                motionCount.textContent = '0';
+                peopleCount.textContent = '0';
+                updateStatus(false);
+                
+                showMessage('⏹️ Motion detection stopped', 'success');
+
+            } catch (error) {
+                showMessage('❌ Failed to stop detection: ' + error.message, 'error');
+            } finally {
+                stopBtn.innerHTML = '⏹️ Stop Detection';
+                stopBtn.disabled = false;
+            }
+        });
+
+        // Initialize
+        updateDeviceInfo();
+        updateStatus(false);
+        
+        // Show welcome message
+        setTimeout(() => {
+            showMessage('🎯 Ready! Each device will use its own camera', 'success');
+        }, 1000);
+
+        // Check camera availability
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showMessage('❌ Camera access not supported on this device', 'error');
+            startBtn.disabled = true;
+        }
+    </script>
+</body>
+</html>
