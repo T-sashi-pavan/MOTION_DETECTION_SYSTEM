@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face Mesh with Webcam</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+</head>
+<body>
+  <video id="webcam" width="640" height="480" autoplay playsinline></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+
+    async function setupCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true
+      });
+      videoElement.srcObject = stream;
+      await new Promise((resolve) => videoElement.onloadedmetadata = resolve);
+    }
+
+    async function detectFace() {
+      const faceMesh = new FaceMesh.FaceMesh({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+      });
+
+      // Set the FaceMesh options
+      faceMesh.setOptions({
+        maxNumFaces: 1,  // Detect only one face
+        refineLandmarks: true,  // More precise landmark detection
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+
+      await faceMesh.initialize();
+
+      faceMesh.onResults((results) => {
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+        if (results.multiFaceLandmarks) {
+          results.multiFaceLandmarks.forEach((landmarks) => {
+            landmarks.forEach((point) => {
+              canvasCtx.beginPath();
+              canvasCtx.arc(point.x * canvasElement.width, point.y * canvasElement.height, 2, 0, 2 * Math.PI);
+              canvasCtx.fillStyle = 'red';
+              canvasCtx.fill();
+            });
+          });
+        }
+      });
+
+      function processFrame() {
+        faceMesh.send({ image: videoElement });
+        requestAnimationFrame(processFrame);
+      }
+
+      processFrame();
+    }
+
+    async function startFaceMesh() {
+      await setupCamera();
+      detectFace();
+    }
+
+    startFaceMesh();
+  </script>
+</body>
+</html>
