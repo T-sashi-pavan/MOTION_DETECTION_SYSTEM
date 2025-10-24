@@ -11,7 +11,12 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    """Main page with client-side camera access"""
+    """Enhanced motion detection with advanced AI features"""
+    return render_template('index_enhanced.html')
+
+@app.route('/simple')
+def simple():
+    """Simple motion detection version"""
     return render_template('index.html')
 
 @app.route('/process_frame', methods=['POST'])

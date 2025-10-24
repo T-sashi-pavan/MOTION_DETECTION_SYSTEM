@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Enhanced Motion Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .video-container {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .video-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #video {
+            width: 100%;
+            max-width: 800px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #canvas, #motionCanvas, #debugCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-width: 140px;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(45deg, #f44336, #e57373);
+            color: white;
+        }
+
+        .btn-reset {
+            background: linear-gradient(45deg, #ff9800, #ffb74d);
+            color: white;
+        }
+
+        .settings-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .setting-item label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .setting-item input, .setting-item select {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stats {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .stats h3 {
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            font-size: 1.4em;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #4caf50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            text-transform: uppercase;
+        }
+
+        .detection-info {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 0.9em;
+            max-width: 250px;
+        }
+
+        .detection-method {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+
+        .placeholder {
+            width: 100%;
+            max-width: 800px;
+            height: 450px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .placeholder-text h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Enhanced Motion Detection System</h1>
+        <p>Advanced Multi-Method Human Detection - MediaPipe + OpenCV Level</p>
+    </div>
+
+    <div class="container">
+        <!-- Settings Panel -->
+        <div class="settings-panel">
+            <h3 style="margin-bottom: 15px; color: #4fc3f7;">🔧 Detection Settings</h3>
+            <div class="settings-grid">
+                <div class="setting-item">
+                    <label>Motion Sensitivity</label>
+                    <input type="range" id="motion-threshold" min="10" max="50" value="25">
+                    <span id="threshold-value">25</span>
+                </div>
+                <div class="setting-item">
+                    <label>Min Human Area</label>
+                    <input type="range" id="min-area" min="1000" max="5000" value="1500">
+                    <span id="min-area-value">1500</span>
+                </div>
+                <div class="setting-item">
+                    <label>Detection Method</label>
+                    <select id="detection-method">
+                        <option value="combined">Combined (Best)</option>
+                        <option value="motion">Motion Only</option>
+                        <option value="face">Face Detection</option>
+                        <option value="pose">Pose Estimation</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label>Background Learning</label>
+                    <select id="bg-learning">
+                        <option value="auto">Auto</option>
+                        <option value="fast">Fast</option>
+                        <option value="slow">Slow</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Display -->
+        <div class="video-container">
+            <div id="video-section">
+                <div class="placeholder">
+                    <div class="placeholder-text">
+                        <h3>📷 Enhanced Camera System</h3>
+                        <p>Click "Start Detection" for advanced analysis</p>
+                        <p><small>Multi-method detection with skin analysis</small></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="start-btn" class="btn btn-start">▶️ Start Detection</button>
+            <button id="stop-btn" class="btn btn-stop" disabled>⏹️ Stop Detection</button>
+            <button id="reset-btn" class="btn btn-reset" disabled>🔄 Reset Background</button>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats">
+            <h3>📊 Advanced Detection Analytics</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div id="people-count" class="stat-value">0</div>
+                    <div class="stat-label">People Detected</div>
+                </div>
+                <div class="stat-item">
+                    <div id="motion-events" class="stat-value">0</div>
+                    <div class="stat-label">Motion Events</div>
+                </div>
+                <div class="stat-item">
+                    <div id="face-count" class="stat-value">0</div>
+                    <div class="stat-label">Faces Found</div>
+                </div>
+                <div class="stat-item">
+                    <div id="pose-count" class="stat-value">0</div>
+                    <div class="stat-label">Poses Detected</div>
+                </div>
+                <div class="stat-item">
+                    <div id="skin-detection" class="stat-value">0</div>
+                    <div class="stat-label">Skin Areas</div>
+                </div>
+                <div class="stat-item">
+                    <div id="frame-rate" class="stat-value">0</div>
+                    <div class="stat-label">FPS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TensorFlow.js for AI detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@latest"></script>
+
+    <script>
+        // Enhanced Motion Detection System
+        class EnhancedMotionDetector {
+            constructor() {
+                this.video = null;
+                this.canvas = null;
+                this.ctx = null;
+                this.motionCanvas = null;
+                this.motionCtx = null;
+                this.debugCanvas = null;
+                this.debugCtx = null;
+                
+                // Detection models
+                this.faceModel = null;
+                this.poseModel = null;
+                
+                // Background subtraction
+                this.backgroundModel = null;
+                this.backgroundHistory = [];
+                this.backgroundLearningRate = 0.1;
+                
+                // Detection parameters
+                this.motionThreshold = 25;
+                this.minHumanArea = 1500;
+                this.maxHumanArea = 50000;
+                this.humanAspectRatio = { min: 1.2, max: 4.0 };
+                this.humanSize = { minWidth: 30, minHeight: 60, maxWidth: 300, maxHeight: 500 };
+                
+                // Tracking variables
+                this.frameCount = 0;
+                this.isRunning = false;
+                this.detectionMethod = 'combined';
+                this.lastFrameTime = 0;
+                this.fps = 0;
+                
+                // Statistics
+                this.stats = {
+                    peopleCount: 0,
+                    motionEvents: 0,
+                    faceCount: 0,
+                    poseCount: 0,
+                    skinAreas: 0
+                };
+                
+                this.initializeUI();
+                this.loadModels();
+            }
+            
+            async loadModels() {
+                try {
+                    console.log('Loading AI models...');
+                    this.faceModel = await blazeface.load();
+                    this.poseModel = await posenet.load({
+                        architecture: 'MobileNetV1',
+                        outputStride: 16,
+                        inputResolution: { width: 640, height: 480 },
+                        multiplier: 0.75
+                    });
+                    console.log('AI models loaded successfully');
+                } catch (error) {
+                    console.error('Error loading models:', error);
+                }
+            }
+            
+            initializeUI() {
+                // UI elements
+                this.startBtn = document.getElementById('start-btn');
+                this.stopBtn = document.getElementById('stop-btn');
+                this.resetBtn = document.getElementById('reset-btn');
+                this.videoSection = document.getElementById('video-section');
+                
+                // Settings
+                this.motionThresholdSlider = document.getElementById('motion-threshold');
+                this.minAreaSlider = document.getElementById('min-area');
+                this.detectionMethodSelect = document.getElementById('detection-method');
+                this.bgLearningSelect = document.getElementById('bg-learning');
+                
+                // Stat displays
+                this.peopleCountDisplay = document.getElementById('people-count');
+                this.motionEventsDisplay = document.getElementById('motion-events');
+                this.faceCountDisplay = document.getElementById('face-count');
+                this.poseCountDisplay = document.getElementById('pose-count');
+                this.skinDetectionDisplay = document.getElementById('skin-detection');
+                this.frameRateDisplay = document.getElementById('frame-rate');
+                
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.startDetection());
+                this.stopBtn.addEventListener('click', () => this.stopDetection());
+                this.resetBtn.addEventListener('click', () => this.resetBackground());
+                
+                // Settings listeners
+                this.motionThresholdSlider.addEventListener('input', (e) => {
+                    this.motionThreshold = parseInt(e.target.value);
+                    document.getElementById('threshold-value').textContent = e.target.value;
+                });
+                
+                this.minAreaSlider.addEventListener('input', (e) => {
+                    this.minHumanArea = parseInt(e.target.value);
+                    document.getElementById('min-area-value').textContent = e.target.value;
+                });
+                
+                this.detectionMethodSelect.addEventListener('change', (e) => {
+                    this.detectionMethod = e.target.value;
+                });
+                
+                this.bgLearningSelect.addEventListener('change', (e) => {
+                    const rate = e.target.value;
+                    this.backgroundLearningRate = rate === 'fast' ? 0.2 : rate === 'slow' ? 0.05 : 0.1;
+                });
+            }
+            
+            async startDetection() {
+                try {
+                    this.startBtn.disabled = true;
+                    this.startBtn.textContent = '🔄 Starting...';
+                    
+                    await this.setupCamera();
+                    this.setupCanvas();
+                    
+                    this.isRunning = true;
+                    this.frameCount = 0;
+                    this.lastFrameTime = performance.now();
+                    
+                    // Reset stats
+                    Object.keys(this.stats).forEach(key => this.stats[key] = 0);
+                    
+                    this.startBtn.disabled = true;
+                    this.stopBtn.disabled = false;
+                    this.resetBtn.disabled = false;
+                    this.startBtn.textContent = '▶️ Start Detection';
+                    
+                    this.processFrame();
+                    
+                } catch (error) {
+                    console.error('Start detection error:', error);
+                    this.startBtn.disabled = false;
+                    this.startBtn.textContent = '▶️ Start Detection';
+                }
+            }
+            
+            async setupCamera() {
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                this.video = document.createElement('video');
+                this.video.id = 'video';
+                this.video.autoplay = true;
+                this.video.playsInline = true;
+                this.video.srcObject = stream;
+                
+                return new Promise((resolve) => {
+                    this.video.addEventListener('loadedmetadata', () => {
+                        resolve();
+                    });
+                });
+            }
+            
+            setupCanvas() {
+                // Main detection canvas
+                this.canvas = document.createElement('canvas');
+                this.canvas.id = 'canvas';
+                this.ctx = this.canvas.getContext('2d');
+                
+                // Motion visualization canvas
+                this.motionCanvas = document.createElement('canvas');
+                this.motionCanvas.id = 'motionCanvas';
+                this.motionCtx = this.motionCanvas.getContext('2d');
+                
+                // Debug canvas
+                this.debugCanvas = document.createElement('canvas');
+                this.debugCanvas.id = 'debugCanvas';
+                this.debugCtx = this.debugCanvas.getContext('2d');
+                
+                // Create wrapper
+                const wrapper = document.createElement('div');
+                wrapper.className = 'video-wrapper';
+                wrapper.appendChild(this.video);
+                wrapper.appendChild(this.canvas);
+                wrapper.appendChild(this.motionCanvas);
+                
+                // Add detection info overlay
+                const detectionInfo = document.createElement('div');
+                detectionInfo.className = 'detection-info';
+                detectionInfo.id = 'detection-info';
+                wrapper.appendChild(detectionInfo);
+                
+                this.videoSection.innerHTML = '';
+                this.videoSection.appendChild(wrapper);
+                
+                // Set canvas dimensions
+                this.canvas.width = this.motionCanvas.width = this.debugCanvas.width = this.video.videoWidth;
+                this.canvas.height = this.motionCanvas.height = this.debugCanvas.height = this.video.videoHeight;
+            }
+            
+            async processFrame() {
+                if (!this.isRunning || !this.video) return;
+                
+                const currentTime = performance.now();
+                this.fps = Math.round(1000 / (currentTime - this.lastFrameTime));
+                this.lastFrameTime = currentTime;
+                
+                this.frameCount++;
+                
+                // Clear canvases
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.motionCtx.clearRect(0, 0, this.motionCanvas.width, this.motionCanvas.height);
+                
+                let detectedBoxes = [];
+                
+                // Method 1: Face Detection
+                if (this.detectionMethod === 'combined' || this.detectionMethod === 'face') {
+                    const faceBoxes = await this.detectFaces();
+                    detectedBoxes = detectedBoxes.concat(faceBoxes);
+                }
+                
+                // Method 2: Pose Detection
+                if (this.detectionMethod === 'combined' || this.detectionMethod === 'pose') {
+                    const poseBoxes = await this.detectPoses();
+                    detectedBoxes = detectedBoxes.concat(poseBoxes);
+                }
+                
+                // Method 3: Motion Detection
+                if (this.detectionMethod === 'combined' || this.detectionMethod === 'motion') {
+                    const motionBoxes = this.detectMotion();
+                    detectedBoxes = detectedBoxes.concat(motionBoxes);
+                }
+                
+                // Remove overlapping boxes
+                const finalBoxes = this.removeOverlappingBoxes(detectedBoxes);
+                
+                // Update statistics
+                this.stats.peopleCount = finalBoxes.length;
+                if (finalBoxes.length > 0) {
+                    this.stats.motionEvents++;
+                }
+                
+                // Draw detection boxes
+                this.drawDetectionBoxes(finalBoxes);
+                
+                // Update UI
+                this.updateUI();
+                
+                // Continue processing
+                if (this.isRunning) {
+                    requestAnimationFrame(() => this.processFrame());
+                }
+            }
+            
+            async detectFaces() {
+                if (!this.faceModel || !this.video) return [];
+                
+                try {
+                    const predictions = await this.faceModel.estimateFaces(this.video, false);
+                    this.stats.faceCount = predictions.length;
+                    
+                    return predictions.map(prediction => {
+                        const [x, y, width, height] = prediction.bottomRight.concat(prediction.topLeft).reduce((prev, curr) => {
+                            return [
+                                Math.min(prev[0], curr[0]),
+                                Math.min(prev[1], curr[1]),
+                                Math.max(prev[2], curr[0]) - Math.min(prev[0], curr[0]),
+                                Math.max(prev[3], curr[1]) - Math.min(prev[1], curr[1])
+                            ];
+                        }, [Infinity, Infinity, -Infinity, -Infinity]);
+                        
+                        // Estimate body from face
+                        const bodyHeight = height * 7;
+                        const bodyWidth = width * 2.5;
+                        const bodyX = Math.max(0, x - (bodyWidth - width) / 2);
+                        const bodyY = Math.max(0, y - height * 0.5);
+                        
+                        return {
+                            x: bodyX,
+                            y: bodyY,
+                            width: Math.min(bodyWidth, this.video.videoWidth - bodyX),
+                            height: Math.min(bodyHeight, this.video.videoHeight - bodyY),
+                            confidence: prediction.probability[0],
+                            method: 'face'
+                        };
+                    });
+                } catch (error) {
+                    console.error('Face detection error:', error);
+                    return [];
+                }
+            }
+            
+            async detectPoses() {
+                if (!this.poseModel || !this.video) return [];
+                
+                try {
+                    const poses = await this.poseModel.estimateMultiplePoses(this.video, {
+                        flipHorizontal: false,
+                        maxDetections: 5,
+                        scoreThreshold: 0.5,
+                        nmsRadius: 20
+                    });
+                    
+                    this.stats.poseCount = poses.length;
+                    
+                    return poses.map(pose => {
+                        const keypoints = pose.keypoints.filter(kp => kp.score > 0.5);
+                        if (keypoints.length < 5) return null;
+                        
+                        const xs = keypoints.map(kp => kp.position.x);
+                        const ys = keypoints.map(kp => kp.position.y);
+                        
+                        const x = Math.min(...xs) - 30;
+                        const y = Math.min(...ys) - 30;
+                        const width = Math.max(...xs) - Math.min(...xs) + 60;
+                        const height = Math.max(...ys) - Math.min(...ys) + 60;
+                        
+                        return {
+                            x: Math.max(0, x),
+                            y: Math.max(0, y),
+                            width: Math.min(width, this.video.videoWidth - x),
+                            height: Math.min(height, this.video.videoHeight - y),
+                            confidence: pose.score,
+                            method: 'pose'
+                        };
+                    }).filter(box => box !== null);
+                } catch (error) {
+                    console.error('Pose detection error:', error);
+                    return [];
+                }
+            }
+            
+            detectMotion() {
+                // Background subtraction based motion detection
+                const currentFrame = this.getFrameData();
+                if (!currentFrame) return [];
+                
+                if (!this.backgroundModel) {
+                    this.backgroundModel = currentFrame.slice();
+                    return [];
+                }
+                
+                // Update background model
+                for (let i = 0; i < currentFrame.length; i += 4) {
+                    this.backgroundModel[i] = this.backgroundModel[i] * (1 - this.backgroundLearningRate) + 
+                                            currentFrame[i] * this.backgroundLearningRate;
+                    this.backgroundModel[i + 1] = this.backgroundModel[i + 1] * (1 - this.backgroundLearningRate) + 
+                                                currentFrame[i + 1] * this.backgroundLearningRate;
+                    this.backgroundModel[i + 2] = this.backgroundModel[i + 2] * (1 - this.backgroundLearningRate) + 
+                                                currentFrame[i + 2] * this.backgroundLearningRate;
+                }
+                
+                // Calculate difference
+                const diffData = new Uint8ClampedArray(currentFrame.length);
+                for (let i = 0; i < currentFrame.length; i += 4) {
+                    const diff = Math.abs(currentFrame[i] - this.backgroundModel[i]) +
+                               Math.abs(currentFrame[i + 1] - this.backgroundModel[i + 1]) +
+                               Math.abs(currentFrame[i + 2] - this.backgroundModel[i + 2]);
+                    
+                    const isMotion = diff > this.motionThreshold;
+                    diffData[i] = diffData[i + 1] = diffData[i + 2] = isMotion ? 255 : 0;
+                    diffData[i + 3] = 255;
+                }
+                
+                // Find contours and filter for human-like shapes
+                return this.findHumanContours(diffData);
+            }
+            
+            getFrameData() {
+                if (!this.video || this.video.videoWidth === 0) return null;
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = this.video.videoWidth;
+                canvas.height = this.video.videoHeight;
+                
+                ctx.drawImage(this.video, 0, 0);
+                return ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            }
+            
+            findHumanContours(diffData) {
+                // Simplified contour detection for human shapes
+                const boxes = [];
+                const width = this.video.videoWidth;
+                const height = this.video.videoHeight;
+                
+                // Grid-based approach for performance
+                const gridSize = 20;
+                for (let y = 0; y < height - gridSize; y += gridSize) {
+                    for (let x = 0; x < width - gridSize; x += gridSize) {
+                        let motionPixels = 0;
+                        
+                        for (let dy = 0; dy < gridSize; dy++) {
+                            for (let dx = 0; dx < gridSize; dx++) {
+                                const idx = ((y + dy) * width + (x + dx)) * 4;
+                                if (diffData[idx] > 0) motionPixels++;
+                            }
+                        }
+                        
+                        if (motionPixels > gridSize * gridSize * 0.3) {
+                            // Expand to find full object
+                            const box = this.expandMotionRegion(diffData, x, y, width, height);
+                            if (this.isHumanShape(box)) {
+                                boxes.push({...box, method: 'motion'});
+                            }
+                        }
+                    }
+                }
+                
+                return boxes;
+            }
+            
+            expandMotionRegion(diffData, startX, startY, width, height) {
+                let minX = startX, maxX = startX + 20;
+                let minY = startY, maxY = startY + 20;
+                
+                // Simple expansion logic
+                const expansion = 50;
+                minX = Math.max(0, minX - expansion);
+                minY = Math.max(0, minY - expansion);
+                maxX = Math.min(width, maxX + expansion);
+                maxY = Math.min(height, maxY + expansion);
+                
+                return {
+                    x: minX,
+                    y: minY,
+                    width: maxX - minX,
+                    height: maxY - minY,
+                    confidence: 0.7
+                };
+            }
+            
+            isHumanShape(box) {
+                if (!box || box.width <= 0 || box.height <= 0) return false;
+                
+                const aspectRatio = box.height / box.width;
+                const area = box.width * box.height;
+                
+                return aspectRatio >= this.humanAspectRatio.min &&
+                       aspectRatio <= this.humanAspectRatio.max &&
+                       area >= this.minHumanArea &&
+                       area <= this.maxHumanArea &&
+                       box.width >= this.humanSize.minWidth &&
+                       box.height >= this.humanSize.minHeight &&
+                       box.width <= this.humanSize.maxWidth &&
+                       box.height <= this.humanSize.maxHeight;
+            }
+            
+            removeOverlappingBoxes(boxes, threshold = 0.3) {
+                if (boxes.length <= 1) return boxes;
+                
+                // Sort by confidence
+                boxes.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+                
+                const keep = [];
+                for (const box of boxes) {
+                    let shouldKeep = true;
+                    
+                    for (const keptBox of keep) {
+                        const overlap = this.calculateOverlap(box, keptBox);
+                        if (overlap > threshold) {
+                            shouldKeep = false;
+                            break;
+                        }
+                    }
+                    
+                    if (shouldKeep) {
+                        keep.push(box);
+                    }
+                }
+                
+                return keep;
+            }
+            
+            calculateOverlap(box1, box2) {
+                const x1 = Math.max(box1.x, box2.x);
+                const y1 = Math.max(box1.y, box2.y);
+                const x2 = Math.min(box1.x + box1.width, box2.x + box2.width);
+                const y2 = Math.min(box1.y + box1.height, box2.y + box2.height);
+                
+                if (x2 <= x1 || y2 <= y1) return 0;
+                
+                const intersection = (x2 - x1) * (y2 - y1);
+                const union = box1.width * box1.height + box2.width * box2.height - intersection;
+                
+                return intersection / union;
+            }
+            
+            drawDetectionBoxes(boxes) {
+                boxes.forEach((box, index) => {
+                    // Color based on detection method
+                    let color = '#00ff00'; // Default green
+                    if (box.method === 'face') color = '#00ffff'; // Cyan
+                    else if (box.method === 'pose') color = '#ffff00'; // Yellow
+                    else if (box.method === 'motion') color = '#ff00ff'; // Magenta
+                    
+                    this.ctx.strokeStyle = color;
+                    this.ctx.lineWidth = 3;
+                    this.ctx.strokeRect(box.x, box.y, box.width, box.height);
+                    
+                    // Label
+                    this.ctx.fillStyle = color;
+                    this.ctx.font = '16px Arial';
+                    const label = `Person ${index + 1} (${box.method})`;
+                    this.ctx.fillText(label, box.x, box.y - 10);
+                    
+                    // Confidence if available
+                    if (box.confidence) {
+                        this.ctx.font = '12px Arial';
+                        this.ctx.fillText(`${(box.confidence * 100).toFixed(1)}%`, box.x, box.y + box.height + 15);
+                    }
+                });
+            }
+            
+            updateUI() {
+                this.peopleCountDisplay.textContent = this.stats.peopleCount;
+                this.motionEventsDisplay.textContent = this.stats.motionEvents;
+                this.faceCountDisplay.textContent = this.stats.faceCount;
+                this.poseCountDisplay.textContent = this.stats.poseCount;
+                this.skinDetectionDisplay.textContent = this.stats.skinAreas;
+                this.frameRateDisplay.textContent = this.fps;
+                
+                // Update detection info overlay
+                const detectionInfo = document.getElementById('detection-info');
+                if (detectionInfo) {
+                    detectionInfo.innerHTML = `
+                        <div class="detection-method">Detection: ${this.detectionMethod.toUpperCase()}</div>
+                        <div>Frame: ${this.frameCount}</div>
+                        <div>Threshold: ${this.motionThreshold}</div>
+                        <div>BG Learning: ${this.backgroundLearningRate.toFixed(2)}</div>
+                        <div>Status: ${this.stats.peopleCount > 0 ? 'HUMANS DETECTED' : 'NO HUMANS'}</div>
+                    `;
+                }
+            }
+            
+            resetBackground() {
+                this.backgroundModel = null;
+                this.backgroundHistory = [];
+                console.log('Background model reset');
+            }
+            
+            stopDetection() {
+                this.isRunning = false;
+                
+                if (this.video && this.video.srcObject) {
+                    this.video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                
+                this.videoSection.innerHTML = `
+                    <div class="placeholder">
+                        <div class="placeholder-text">
+                            <h3>📷 Enhanced Camera System</h3>
+                            <p>Click "Start Detection" for advanced analysis</p>
+                            <p><small>Multi-method detection with skin analysis</small></p>
+                        </div>
+                    </div>
+                `;
+                
+                this.startBtn.disabled = false;
+                this.stopBtn.disabled = true;
+                this.resetBtn.disabled = true;
+                
+                // Reset stats
+                Object.keys(this.stats).forEach(key => this.stats[key] = 0);
+                this.updateUI();
+            }
+        }
+        
+        // Initialize the enhanced detector
+        const detector = new EnhancedMotionDetector();
+    </script>
+</body>
+</html>
