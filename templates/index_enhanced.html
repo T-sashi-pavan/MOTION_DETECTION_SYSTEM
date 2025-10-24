@@ -1,678 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎯 Motion Detection System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .header {
-            text-align: center;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-        }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 30px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .video-container {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            position: relative;
-        }
-
-        .video-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        #video {
-            width: 100%;
-            max-width: 800px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            border-radius: 10px;
-        }
-
-        .controls {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .btn {
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            min-width: 160px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-start {
-            background: linear-gradient(45deg, #4caf50, #66bb6a);
-            color: white;
-        }
-
-        .btn-stop {
-            background: linear-gradient(45deg, #f44336, #e57373);
-            color: white;
-        }
-
-        .btn-reset {
-            background: linear-gradient(45deg, #6f42c1, #e83e8c);
-            color: white;
-        }
-
-        .stats {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 800px;
-        }
-
-        .stats h3 {
-            margin-bottom: 20px;
-            color: #4fc3f7;
-            font-size: 1.4em;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            color: #4caf50;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            opacity: 0.8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .detection-info {
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 10px;
-            border-left: 4px solid #4caf50;
-        }
-
-        .detection-method {
-            display: inline-block;
-            background: rgba(76, 175, 80, 0.2);
-            color: #c8e6c9;
-            padding: 5px 10px;
-            border-radius: 15px;
-            margin: 2px;
-            font-size: 0.8em;
-        }
-
-        .placeholder {
-            width: 100%;
-            max-width: 800px;
-            height: 450px;
-            background: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            .btn {
-                width: 100%;
-                max-width: 300px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎯 Motion Detection System</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 20px;
+      text-shadow: 1px 1px 3px black;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    video, canvas {
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+      max-width: 90%;
+    }
+    .stats {
+      background: rgba(0,0,0,0.4);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      width: 90%;
+      max-width: 600px;
+    }
+    .stat-item {
+      display: inline-block;
+      margin: 10px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+    }
+    button {
+      margin: 15px;
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(45deg, #4caf50, #81c784);
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎯 Motion Detection System</h1>
-        <p>Simple and Accurate Human Detection - Real-time Green Box Tracking</p>
+  <header>
+    <h1>🎯 Motion Detection System</h1>
+    <p>AI-Powered Human Detection (Client-side, Privacy Safe)</p>
+  </header>
+
+  <main>
+    <video id="video" autoplay muted playsinline></video>
+    <canvas id="canvas"></canvas>
+
+    <div class="controls">
+      <button id="start">Start Detection</button>
+      <button id="stop" disabled>Stop Detection</button>
     </div>
 
-    <div class="container">
-        <div class="video-container">
-            <div id="video-section">
-                <div class="placeholder">
-                    <div style="text-align: center; color: rgba(255, 255, 255, 0.8);">
-                        <h3>📷 Motion Detection Ready</h3>
-                        <p>Simple and accurate human detection</p>
-                        <p><small>Click "Start Detection" to begin</small></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="controls">
-            <button id="start-btn" class="btn btn-start">🎬 Start Detection</button>
-            <button id="stop-btn" class="btn btn-stop" disabled>⏹️ Stop Detection</button>
-        </div>
-
-        <div class="stats">
-            <h3>📊 Motion Detection Statistics</h3>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div id="people-count" class="stat-value">0</div>
-                    <div class="stat-label">People Detected</div>
-                </div>
-                <div class="stat-item">
-                    <div id="frame-count" class="stat-value">0</div>
-                    <div class="stat-label">Frames Processed</div>
-                </div>
-                <div class="stat-item">
-                    <div id="detection-rate" class="stat-value">0</div>
-                    <div class="stat-label">Detections/Min</div>
-                </div>
-                <div class="stat-item">
-                    <div id="motion-intensity" class="stat-value">0</div>
-                    <div class="stat-label">Motion Intensity</div>
-                </div>
-            </div>
-            
-            <div class="detection-info">
-                <h4>🔬 Detection Methods Active:</h4>
-                <div id="detection-methods">
-                    <span class="detection-method">Background Subtraction</span>
-                    <span class="detection-method">Human Shape Analysis</span>
-                    <span class="detection-method">Skin Color Detection</span>
-                    <span class="detection-method">Motion Clustering</span>
-                    <span class="detection-method">Overlap Removal</span>
-                </div>
-                <p><strong>Status:</strong> <span id="status-text">System Ready</span></p>
-            </div>
-        </div>
+    <div class="stats">
+      <div class="stat-item"><strong>👥 People Detected:</strong> <span id="peopleCount">0</span></div>
+      <div class="stat-item"><strong>📸 Frames:</strong> <span id="frameCount">0</span></div>
+      <div class="stat-item"><strong>⚡ Intensity:</strong> <span id="motionIntensity">0</span></div>
     </div>
+  </main>
 
-    <script>
-        class SimpleMotionDetector {
-            constructor() {
-                this.video = null;
-                this.canvas = null;
-                this.ctx = null;
-                this.stream = null;
-                this.isRunning = false;
-                this.previousFrame = null;
-                this.frameCount = 0;
-                this.peopleDetected = 0;
-                this.motionIntensity = 0;
-                this.detectionCount = 0;
-                this.startTime = Date.now();
-                this.detectionHistory = [];
-                
-                this.initializeElements();
-            }
-            
-            initializeElements() {
-                this.startBtn = document.getElementById('start-btn');
-                this.stopBtn = document.getElementById('stop-btn');
-                this.videoSection = document.getElementById('video-section');
-                
-                this.peopleCountEl = document.getElementById('people-count');
-                this.frameCountEl = document.getElementById('frame-count');
-                this.detectionRateEl = document.getElementById('detection-rate');
-                this.motionIntensityEl = document.getElementById('motion-intensity');
-                this.statusTextEl = document.getElementById('status-text');
-                
-                this.startBtn.onclick = () => this.startDetection();
-                this.stopBtn.onclick = () => this.stopDetection();
-            }
-            
-            async startDetection() {
-                try {
-                    this.startBtn.innerHTML = '🔄 Starting...';
-                    this.startBtn.disabled = true;
-                    
-                    await this.initializeCamera();
-                    
-                    this.isRunning = true;
-                    this.startBtn.disabled = true;
-                    this.stopBtn.disabled = false;
-                    this.startTime = Date.now();
-                    this.frameCount = 0;
-                    this.detectionCount = 0;
-                    this.detectionHistory = [];
-                    
-                    this.updateStatus('DETECTION ACTIVE - MONITORING FOR MOTION');
-                    
-                    // Start processing after a short delay to let camera stabilize
-                    setTimeout(() => {
-                        this.processFrames();
-                    }, 500);
-                    
-                } catch (error) {
-                    console.error('Camera access error:', error);
-                    alert('Camera access error: ' + error.message);
-                    this.startBtn.innerHTML = '🎬 Start Detection';
-                    this.startBtn.disabled = false;
-                }
-            }
-            
-            stopDetection() {
-                this.isRunning = false;
-                this.startBtn.innerHTML = '🎬 Start Detection';
-                this.startBtn.disabled = false;
-                this.stopBtn.disabled = true;
-                this.updateStatus('DETECTION STOPPED');
-                
-                // Stop camera stream
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                    this.stream = null;
-                }
-                
-                // Clear canvas
-                if (this.ctx) {
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                }
-                
-                // Reset video display
-                this.resetVideoDisplay();
-                
-                // Reset stats
-                this.peopleDetected = 0;
-                this.frameCount = 0;
-                this.detectionCount = 0;
-                this.motionIntensity = 0;
-                this.updateStats();
-            }
-            
-            async initializeCamera() {
-                const constraints = {
-                    video: {
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: 'user'
-                    }
-                };
-                
-                this.stream = await navigator.mediaDevices.getUserMedia(constraints);
-                
-                // Create video element
-                this.video = document.createElement('video');
-                this.video.id = 'video';
-                this.video.autoplay = true;
-                this.video.playsInline = true;
-                this.video.muted = true;
-                this.video.srcObject = this.stream;
-                
-                // Create canvas for detection overlay
-                this.canvas = document.createElement('canvas');
-                this.canvas.id = 'canvas';
-                this.ctx = this.canvas.getContext('2d');
-                
-                // Create wrapper
-                const wrapper = document.createElement('div');
-                wrapper.className = 'video-wrapper';
-                wrapper.appendChild(this.video);
-                wrapper.appendChild(this.canvas);
-                
-                this.videoSection.innerHTML = '';
-                this.videoSection.appendChild(wrapper);
-                
-                // Wait for video to load
-                return new Promise((resolve) => {
-                    this.video.addEventListener('loadedmetadata', () => {
-                        this.canvas.width = this.video.videoWidth;
-                        this.canvas.height = this.video.videoHeight;
-                        resolve();
-                    });
-                });
-            }
-            
-            processFrames() {
-                if (!this.isRunning) return;
-                
-                this.frameCount++;
-                
-                // Get current frame
-                const currentFrame = this.captureFrame();
-                
-                // Detect motion and people
-                let hasMotion = false;
-                let peopleCount = 0;
-                
-                if (this.previousFrame && currentFrame) {
-                    const motionData = this.detectMotion(currentFrame, this.previousFrame);
-                    hasMotion = motionData.hasMotion;
-                    peopleCount = motionData.peopleCount;
-                    this.motionIntensity = motionData.intensity;
-                    
-                    if (hasMotion) {
-                        this.detectionCount++;
-                        this.drawDetectionBoxes(motionData.regions);
-                    } else {
-                        // Clear canvas if no motion
-                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    }
-                } else {
-                    // For first few frames, simulate detection to show system is working
-                    if (this.frameCount > 10) {
-                        hasMotion = true;
-                        peopleCount = 1;
-                        this.motionIntensity = 25;
-                        
-                        // Draw a default detection box in center of frame
-                        const centerBox = [{
-                            x: this.canvas.width * 0.3,
-                            y: this.canvas.height * 0.2,
-                            width: this.canvas.width * 0.4,
-                            height: this.canvas.height * 0.6
-                        }];
-                        this.drawDetectionBoxes(centerBox);
-                        this.detectionCount++;
-                    }
-                }
-                
-                this.peopleDetected = peopleCount;
-                
-                // Update UI
-                this.updateStats();
-                this.updateStatus(hasMotion ? 'HUMAN MOTION DETECTED' : 'NO MOTION DETECTED');
-                
-                // Store current frame for next comparison
-                this.previousFrame = currentFrame;
-                
-                // Continue processing
-                if (this.isRunning) {
-                    requestAnimationFrame(() => this.processFrames());
-                }
-            }
-            
-            captureFrame() {
-                if (!this.video || this.video.videoWidth === 0) return null;
-                
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCanvas.width = this.video.videoWidth;
-                tempCanvas.height = this.video.videoHeight;
-                
-                tempCtx.drawImage(this.video, 0, 0);
-                return tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-            }
-            
-            detectMotion(current, previous) {
-                const currentData = current.data;
-                const previousData = previous.data;
-                const width = current.width;
-                const height = current.height;
-                
-                const motionPixels = [];
-                let totalMotion = 0;
-                const threshold = 30; // Sensitivity threshold
-                
-                // Compare pixels to find motion
-                for (let y = 0; y < height; y += 4) { // Check every 4th pixel for performance
-                    for (let x = 0; x < width; x += 4) {
-                        const i = (y * width + x) * 4;
-                        
-                        // Calculate difference
-                        const rDiff = Math.abs(currentData[i] - previousData[i]);
-                        const gDiff = Math.abs(currentData[i + 1] - previousData[i + 1]);
-                        const bDiff = Math.abs(currentData[i + 2] - previousData[i + 2]);
-                        
-                        const diff = (rDiff + gDiff + bDiff) / 3;
-                        
-                        if (diff > threshold) {
-                            motionPixels.push({ x, y, intensity: diff });
-                            totalMotion += diff;
-                        }
-                    }
-                }
-                
-                // Determine if motion is detected
-                const hasMotion = motionPixels.length > 100; // Lower threshold for better detection
-                
-                if (hasMotion) {
-                    // Create detection boxes based on motion clusters
-                    const regions = this.createDetectionBoxes(motionPixels, width, height);
-                    const peopleCount = regions.length;
-                    const intensity = Math.min(100, Math.round(totalMotion / 100));
-                    
-                    return {
-                        hasMotion: true,
-                        peopleCount,
-                        intensity,
-                        regions
-                    };
-                } else {
-                    return {
-                        hasMotion: false,
-                        peopleCount: 0,
-                        intensity: 0,
-                        regions: []
-                    };
-                }
-            }
-            
-            createDetectionBoxes(motionPixels, width, height) {
-                if (motionPixels.length === 0) return [];
-                
-                // Simple clustering based on proximity
-                const clusters = [];
-                const visited = new Set();
-                const clusterDistance = 50; // Pixels
-                
-                for (let i = 0; i < motionPixels.length; i++) {
-                    if (visited.has(i)) continue;
-                    
-                    const cluster = [motionPixels[i]];
-                    visited.add(i);
-                    
-                    // Find all pixels within clusterDistance
-                    for (let j = i + 1; j < motionPixels.length; j++) {
-                        if (visited.has(j)) continue;
-                        
-                        const dx = motionPixels[i].x - motionPixels[j].x;
-                        const dy = motionPixels[i].y - motionPixels[j].y;
-                        const distance = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (distance < clusterDistance) {
-                            cluster.push(motionPixels[j]);
-                            visited.add(j);
-                        }
-                    }
-                    
-                    if (cluster.length > 10) { // Minimum cluster size
-                        clusters.push(cluster);
-                    }
-                }
-                
-                // Create bounding boxes for each cluster
-                const regions = [];
-                
-                clusters.forEach(cluster => {
-                    let minX = width, maxX = 0, minY = height, maxY = 0;
-                    
-                    cluster.forEach(pixel => {
-                        minX = Math.min(minX, pixel.x);
-                        maxX = Math.max(maxX, pixel.x);
-                        minY = Math.min(minY, pixel.y);
-                        maxY = Math.max(maxY, pixel.y);
-                    });
-                    
-                    // Create a person-sized box around the cluster
-                    const boxWidth = Math.max(80, maxX - minX + 40);
-                    const boxHeight = Math.max(160, maxY - minY + 60);
-                    const centerX = (minX + maxX) / 2;
-                    const centerY = (minY + maxY) / 2;
-                    
-                    const x = Math.max(0, centerX - boxWidth / 2);
-                    const y = Math.max(0, centerY - boxHeight / 2);
-                    
-                    regions.push({
-                        x: Math.round(x),
-                        y: Math.round(y),
-                        width: Math.round(Math.min(boxWidth, width - x)),
-                        height: Math.round(Math.min(boxHeight, height - y))
-                    });
-                });
-                
-                return regions;
-            }
-            
-            drawDetectionBoxes(regions) {
-                // Clear canvas
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                
-                // Draw green boxes for each detected person
-                regions.forEach((region, index) => {
-                    // Draw green bounding box with thicker line
-                    this.ctx.strokeStyle = '#00FF00';
-                    this.ctx.lineWidth = 4;
-                    this.ctx.strokeRect(region.x, region.y, region.width, region.height);
-                    
-                    // Add person label with background
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    this.ctx.fillRect(region.x, region.y - 30, 120, 25);
-                    
-                    this.ctx.fillStyle = '#00FF00';
-                    this.ctx.font = 'bold 16px Arial';
-                    this.ctx.fillText(`Person ${index + 1}`, region.x + 5, region.y - 10);
-                    
-                    // Add confidence indicator
-                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-                    this.ctx.fillRect(region.x, region.y + region.height + 5, 100, 20);
-                    
-                    this.ctx.fillStyle = '#00FF00';
-                    this.ctx.font = '14px Arial';
-                    this.ctx.fillText('DETECTED', region.x + 5, region.y + region.height + 20);
-                });
-                
-                // Add status overlay
-                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-                this.ctx.fillRect(10, 10, 350, 60);
-                
-                this.ctx.fillStyle = '#00FF00';
-                this.ctx.font = 'bold 16px Arial';
-                this.ctx.fillText(`People Detected: ${regions.length}`, 20, 35);
-                this.ctx.fillText('STATUS: HUMAN MOTION DETECTED', 20, 55);
-            }
-            
-            updateStats() {
-                this.peopleCountEl.textContent = this.peopleDetected;
-                this.frameCountEl.textContent = this.frameCount;
-                this.motionIntensityEl.textContent = this.motionIntensity;
-                
-                // Calculate detection rate per minute
-                const elapsed = (Date.now() - this.startTime) / 1000 / 60;
-                const rate = elapsed > 0 ? Math.round(this.detectionCount / elapsed) : 0;
-                this.detectionRateEl.textContent = rate;
-            }
-            
-            updateStatus(message) {
-                this.statusTextEl.textContent = message;
-            }
-            
-            resetVideoDisplay() {
-                this.videoSection.innerHTML = `
-                    <div class="placeholder">
-                        <div style="text-align: center; color: rgba(255, 255, 255, 0.8);">
-                            <h3>📷 Motion Detection Ready</h3>
-                            <p>Simple and accurate human detection</p>
-                            <p><small>Click "Start Detection" to begin</small></p>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        // Initialize simple motion detector
-        document.addEventListener('DOMContentLoaded', () => {
-            new SimpleMotionDetector();
-        });
-    </script>
+  <!-- ✅ TensorFlow.js + COCO SSD Model -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const startBtn = document.getElementById("start");
+    const stopBtn = document.getElementById("stop");
+
+    const peopleCountEl = document.getElementById("peopleCount");
+    const frameCountEl = document.getElementById("frameCount");
+    const motionIntensityEl = document.getElementById("motionIntensity");
+
+    let model = null;
+    let isDetecting = false;
+    let frameCount = 0;
+    let stream = null;
+
+    async function setupCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      await new Promise((resolve) => (video.onloadedmetadata = resolve));
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    }
+
+    async function startDetection() {
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+
+      if (!model) {
+        model = await cocoSsd.load();
+      }
+
+      await setupCamera();
+      isDetecting = true;
+      detectFrame();
+    }
+
+    function stopDetection() {
+      isDetecting = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    async function detectFrame() {
+      if (!isDetecting) return;
+
+      frameCount++;
+      frameCountEl.textContent = frameCount;
+
+      const predictions = await model.detect(video);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      let people = predictions.filter((p) => p.class === "person" && p.score > 0.5);
+      peopleCountEl.textContent = people.length;
+      motionIntensityEl.textContent = Math.min(100, Math.round(people.length * 25));
+
+      people.forEach((person, i) => {
+        const [x, y, w, h] = person.bbox;
+        ctx.strokeStyle = "#00FF00";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(x, y - 25, 120, 20);
+        ctx.fillStyle = "#00FF00";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Person ${i + 1}`, x + 5, y - 10);
+      });
+
+      requestAnimationFrame(detectFrame);
+    }
+
+    startBtn.addEventListener("click", startDetection);
+    stopBtn.addEventListener("click", stopDetection);
+  </script>
 </body>
 </html>
