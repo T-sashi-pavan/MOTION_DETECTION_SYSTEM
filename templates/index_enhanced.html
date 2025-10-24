@@ -28,43 +28,40 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      position: relative;
     }
+
+    /* ✅ Wrap the video area for relative positioning */
     .video-container {
       position: relative;
       display: inline-block;
-      margin: 20px 0;
-    }
-    canvas {
       border-radius: 10px;
       box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      border-radius: 10px;
       max-width: 90%;
-      background: #000;
     }
-    .status-indicator {
+
+    /* ✅ Alert positioned inside video area */
+    .motion-alert {
       position: absolute;
-      top: 15px;
-      left: 15px;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 8px 15px;
-      border-radius: 20px;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 255, 0, 0.25);
+      color: #00ff00;
+      padding: 5px 12px;
+      border-radius: 8px;
       font-size: 14px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
+      font-weight: bold;
+      display: none;
+      box-shadow: 0 0 10px rgba(0,255,0,0.6);
+      z-index: 2;
     }
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 8px;
-    }
-    .status-active {
-      background-color: #4caf50;
-      box-shadow: 0 0 8px #4caf50;
-    }
-    .status-inactive {
-      background-color: #f44336;
-    }
+
     .stats {
       background: rgba(0,0,0,0.4);
       border-radius: 10px;
@@ -82,33 +79,17 @@
     }
     button {
       margin: 15px;
-      padding: 12px 30px;
+      padding: 10px 25px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       background: linear-gradient(45deg, #4caf50, #81c784);
       color: white;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.3);
     }
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
-    }
-    #stop {
-      background: linear-gradient(45deg, #f44336, #e57373);
-    }
-    .detection-info {
-      margin-top: 15px;
-      font-size: 14px;
-      opacity: 0.9;
     }
   </style>
 </head>
@@ -120,11 +101,8 @@
 
   <main>
     <div class="video-container">
+      <div class="motion-alert" id="motionAlert">⚡ Motion Detected!</div>
       <canvas id="canvas"></canvas>
-      <div class="status-indicator">
-        <div class="status-dot status-inactive"></div>
-        <span id="status-text">Detection Stopped</span>
-      </div>
     </div>
 
     <div class="controls">
@@ -137,10 +115,6 @@
       <div class="stat-item"><strong>📸 Frames:</strong> <span id="frameCount">0</span></div>
       <div class="stat-item"><strong>⚡ Intensity:</strong> <span id="motionIntensity">0</span></div>
     </div>
-    
-    <div class="detection-info">
-      <p>Each detected person is highlighted with a green bounding box and numbered label</p>
-    </div>
   </main>
 
   <!-- ✅ TensorFlow.js + COCO SSD Model -->
@@ -152,52 +126,33 @@
     const ctx = canvas.getContext("2d");
     const startBtn = document.getElementById("start");
     const stopBtn = document.getElementById("stop");
+    const motionAlert = document.getElementById("motionAlert");
 
     const peopleCountEl = document.getElementById("peopleCount");
     const frameCountEl = document.getElementById("frameCount");
     const motionIntensityEl = document.getElementById("motionIntensity");
-    const statusText = document.getElementById("status-text");
-    const statusDot = document.querySelector('.status-dot');
 
     let model = null;
     let isDetecting = false;
     let frameCount = 0;
     let stream = null;
-    let video = null;
+    let video = document.createElement("video");
 
     async function setupCamera() {
-      video = document.createElement('video');
-      stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 }, 
-          height: { ideal: 480 } 
-        } 
-      });
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
       video.srcObject = stream;
-      video.autoplay = true;
-      video.playsInline = true;
-      video.muted = true;
-      
-      await new Promise((resolve) => {
-        video.onloadedmetadata = () => {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          resolve();
-        };
-      });
+      video.play();
+      await new Promise((resolve) => (video.onloadedmetadata = resolve));
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
     }
 
     async function startDetection() {
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      statusDot.classList.remove('status-inactive');
-      statusDot.classList.add('status-active');
-      statusText.textContent = 'Detection Active';
 
       if (!model) {
-        statusText.textContent = 'Loading AI Model...';
         model = await cocoSsd.load();
-        statusText.textContent = 'Detection Active';
       }
 
       await setupCamera();
@@ -209,30 +164,9 @@
       isDetecting = false;
       startBtn.disabled = false;
       stopBtn.disabled = true;
-      statusDot.classList.remove('status-active');
-      statusDot.classList.add('status-inactive');
-      statusText.textContent = 'Detection Stopped';
-      
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
-      }
-      
-      // Clear canvas and show message
+      if (stream) stream.getTracks().forEach((t) => t.stop());
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Detection Stopped', canvas.width/2, canvas.height/2);
-      ctx.font = '16px Arial';
-      ctx.fillText('Click "Start Detection" to begin', canvas.width/2, canvas.height/2 + 30);
-      
-      // Reset counters
-      frameCount = 0;
-      peopleCountEl.textContent = '0';
-      frameCountEl.textContent = '0';
-      motionIntensityEl.textContent = '0';
+      motionAlert.style.display = "none";
     }
 
     async function detectFrame() {
@@ -241,74 +175,34 @@
       frameCount++;
       frameCountEl.textContent = frameCount;
 
-      try {
-        const predictions = await model.detect(video);
-        
-        // Clear canvas and draw video frame
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const predictions = await model.detect(video);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Filter for people with good confidence
-        let people = predictions.filter((p) => p.class === "person" && p.score > 0.5);
-        peopleCountEl.textContent = people.length;
-        
-        // Calculate motion intensity based on number of people
-        motionIntensityEl.textContent = Math.min(100, Math.round(people.length * 25));
+      const people = predictions.filter((p) => p.class === "person" && p.score > 0.5);
+      peopleCountEl.textContent = people.length;
+      motionIntensityEl.textContent = Math.min(100, Math.round(people.length * 25));
 
-        // Draw bounding boxes for each detected person
-        people.forEach((person, i) => {
-          const [x, y, w, h] = person.bbox;
-          
-          // Draw green bounding box
-          ctx.strokeStyle = "#00FF00";
-          ctx.lineWidth = 3;
-          ctx.strokeRect(x, y, w, h);
-          
-          // Draw label background
-          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.fillRect(x, y - 25, 120, 20);
-          
-          // Draw person label
-          ctx.fillStyle = "#00FF00";
-          ctx.font = "bold 14px Arial";
-          ctx.fillText(`Person ${i + 1}`, x + 5, y - 10);
-          
-          // Draw confidence score
-          ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-          ctx.fillRect(x, y + h + 5, 80, 18);
-          ctx.fillStyle = "#00FF00";
-          ctx.font = "12px Arial";
-          ctx.fillText(`${Math.round(person.score * 100)}%`, x + 5, y + h + 17);
-        });
-
-        // Update status text based on detection
-        if (people.length > 0) {
-          statusText.textContent = `${people.length} Person(s) Detected`;
-        } else {
-          statusText.textContent = 'Detection Active - No People';
-        }
-      } catch (error) {
-        console.error("Detection error:", error);
-        statusText.textContent = 'Detection Error';
+      if (people.length > 0) {
+        motionAlert.style.display = "block";
+      } else {
+        motionAlert.style.display = "none";
       }
 
-      // Continue detection
-      if (isDetecting) {
-        requestAnimationFrame(detectFrame);
-      }
+      people.forEach((person, i) => {
+        const [x, y, w, h] = person.bbox;
+        ctx.strokeStyle = "#00FF00";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, w, h);
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(x, y - 25, 120, 20);
+        ctx.fillStyle = "#00FF00";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Person ${i + 1}`, x + 5, y - 10);
+      });
+
+      requestAnimationFrame(detectFrame);
     }
-
-    // Initialize with stopped state
-    window.onload = function() {
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = 'white';
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('Motion Detection System', canvas.width/2, canvas.height/2 - 20);
-      ctx.font = '16px Arial';
-      ctx.fillText('Click "Start Detection" to begin', canvas.width/2, canvas.height/2 + 10);
-    };
 
     startBtn.addEventListener("click", startDetection);
     stopBtn.addEventListener("click", stopDetection);
