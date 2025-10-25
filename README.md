@@ -1,90 +1,143 @@
-# Motion Detection System - Heroku Deployment
+# Motion Detection System
 
-A client-side motion detection system where each device uses its own camera.
+🎥 **Live Demo:** [https://motion-detection-system-e7vf.onrender.com/](https://motion-detection-system-e7vf.onrender.com/)
 
-## Features
-- 📱 Client-side camera access (each device uses its own camera)
-- 🎯 Real-time motion detection
-- 👥 People counting estimation
-- 🔒 Privacy-focused (data stays on device)
-- 📊 Live statistics
-- 🌐 Cross-platform compatibility
+An advanced motion detection system that uses computer vision and machine learning to detect and track human movement in real-time.
 
-## Heroku Deployment Instructions
+## ✨ Key Features
 
-### Prerequisites
-1. Install Heroku CLI: https://devcenter.heroku.com/articles/heroku-cli
-2. Create a free Heroku account: https://signup.heroku.com/
+- **🎯 Real-Time Motion Detection** - Instant detection of human movement
+- **👥 Multi-Person Tracking** - Detect and count multiple people simultaneously
+- **🤖 AI-Powered Detection** - Uses MediaPipe for accurate human pose detection
+- **📱 Cross-Platform** - Works on desktop, mobile, and tablets
+- **🔒 Privacy First** - All processing happens on your device
+- **📊 Live Statistics** - Real-time people counting and motion analysis
+- **🌐 Web-Based** - No installation required, just open in browser
 
-### Deploy to Heroku
-1. **Login to Heroku**
-   ```bash
-   heroku login
-   ```
+## 🚀 Quick Start
 
-2. **Create a new Heroku app**
-   ```bash
-   heroku create your-motion-detection-app
-   ```
+1. **Visit the Live Demo** 
+   - Open [https://motion-detection-system-e7vf.onrender.com/](https://motion-detection-system-e7vf.onrender.com/) in your browser
 
-3. **Initialize Git repository (if not already done)**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   ```
+2. **Allow Camera Access**
+   - Click "Allow" when prompted for camera permissions
+   - Ensure you're using HTTPS (required for camera access)
 
-4. **Connect to Heroku**
-   ```bash
-   heroku git:remote -a your-motion-detection-app
-   ```
+3. **Start Detection**
+   - Move in front of your camera to see real-time motion detection
+   - The system will automatically detect and count people
+   - Green boxes will appear around detected humans
 
-5. **Deploy to Heroku**
-   ```bash
-   git push heroku main
-   ```
+## 🔧 Technology Stack
 
-6. **Open your app**
-   ```bash
-   heroku open
-   ```
+- **Frontend:** HTML5, CSS3, JavaScript (WebRTC)
+- **Backend:** Python Flask
+- **Computer Vision:** OpenCV, MediaPipe
+- **Machine Learning:** NumPy for data processing
+- **Deployment:** Render (Cloud Platform)
 
-### Your Public URL
-After deployment, your app will be available at:
-`https://your-motion-detection-app.herokuapp.com`
+## 📁 Project Structure
 
-## How It Works
-- Each device that visits the URL uses its own camera
-- Motion detection runs entirely in the browser using JavaScript
-- No server-side camera processing (lightweight deployment)
-- Works on mobile phones, tablets, and desktop computers
-
-## File Structure
 ```
-├── heroku_app.py          # Main Flask application
-├── templates/
-│   └── index.html         # Client-side motion detection interface
-├── requirements.txt       # Python dependencies
-├── Procfile              # Heroku process configuration
-├── runtime.txt           # Python version specification
-└── README.md             # This file
+motion-detection-system/
+├── 📄 app.py                    # Main Flask application
+├── 📄 motion_detection_CV.py    # Advanced motion detection with ML
+├── 📄 web_motion_detector.py    # Web-based motion detection
+├── 📄 heroku_app.py             # Web application entry point
+├── 📁 templates/
+│   ├── 📄 index.html            # Main web interface
+│   └── 📄 index_enhanced.html   # Enhanced UI version
+├── 📄 requirements.txt          # Python dependencies
+├── 📄 Procfile                  # Process configuration
+└── 📄 README.md                 # This documentation
 ```
 
-## Privacy & Security
-- ✅ Camera data never leaves the user's device
-- ✅ No video is uploaded to servers
-- ✅ All processing happens client-side
-- ✅ HTTPS enabled by default on Heroku
+## 🎯 How It Works
 
-## Browser Compatibility
-- ✅ Chrome (recommended)
-- ✅ Firefox
-- ✅ Safari
-- ✅ Edge
-- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
+The system uses multiple detection methods for maximum accuracy:
 
-## Troubleshooting
-- Ensure HTTPS is enabled (required for camera access)
-- Allow camera permissions when prompted
-- Works best with good lighting conditions
-- Requires modern browser with WebRTC support
+1. **Face Detection** 🔍
+   - Uses MediaPipe to detect faces and estimate full body positions
+   - Excellent for detecting multiple people
+
+2. **Pose Estimation** 🤸‍♂️
+   - Analyzes body landmarks and posture
+   - Great for single person tracking
+
+3. **Motion Analysis** 🏃‍♂️
+   - Background subtraction to detect movement
+   - Filters out non-human motion using shape analysis
+
+4. **Smart Filtering** 🧠
+   - Combines all methods and removes duplicate detections
+   - Uses skin color detection for human verification
+
+## 🌐 Browser Compatibility
+
+| Browser | Desktop | Mobile | Status |
+|---------|---------|---------|---------|
+| Chrome | ✅ | ✅ | Recommended |
+| Firefox | ✅ | ✅ | Fully Supported |
+| Safari | ✅ | ✅ | Fully Supported |
+| Edge | ✅ | ✅ | Fully Supported |
+
+## 🔒 Privacy & Security
+
+- ✅ **No Data Collection** - Camera data never leaves your device
+- ✅ **Local Processing** - All analysis happens in your browser
+- ✅ **HTTPS Secure** - Encrypted connection for camera access
+- ✅ **No Storage** - No videos or images are saved anywhere
+
+## ⚡ Performance Tips
+
+- **Good Lighting** 💡 - Works best in well-lit environments
+- **Stable Connection** 🌐 - Ensure good internet for smooth experience
+- **Modern Browser** 🔄 - Use latest browser versions for best performance
+- **Camera Quality** 📹 - Higher resolution cameras provide better detection
+
+## 🛠️ Local Development
+
+Want to run this locally? Here's how:
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd motion-detection-system
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python heroku_app.py
+
+# Open in browser
+# Navigate to http://localhost:5000
+```
+
+## 🆘 Troubleshooting
+
+**Camera Not Working?**
+- Ensure you're using HTTPS (camera access requirement)
+- Check browser permissions for camera access
+- Try refreshing the page and allowing permissions again
+
+**Poor Detection?**
+- Improve lighting conditions
+- Move closer to the camera
+- Ensure there's contrast between you and the background
+
+**Slow Performance?**
+- Close other browser tabs
+- Check your internet connection
+- Try using Chrome for best performance
+
+## 📞 Support
+
+Having issues? Here's how to get help:
+- 📧 Create an issue in the repository
+- 📖 Check the troubleshooting section above
+- 🔍 Ensure your browser supports WebRTC
+
+---
+
+**Made with ❤️ using Python, OpenCV, and MediaPipe**
