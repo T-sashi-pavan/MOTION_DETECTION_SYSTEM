@@ -140,4 +140,4 @@ Having issues? Here's how to get help:
 
 ---
 
-**Made with ❤️ using Python, OpenCV, and MediaPipe**
+**Made with using Python, OpenCV, and MediaPipe**
